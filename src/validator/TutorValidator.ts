@@ -6,13 +6,14 @@ import { EducationLevel } from '../entity/EducationLevel';
 import { BaseValidator } from './BaseValidator'
 import { RequestHandler } from 'express';
 import { MysqlDataSource } from '../config/database';
+import * as bcrypt from 'bcrypt';
 
 const birthDateRegex = /^(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/(0[1-9]|1[0-2]|[0-9])\/\d{4}$/;
 const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%¨&*])[A-Za-z\d!@#$%¨&*]{6,}$/;
 const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
 
 export class TutorValidator extends BaseValidator{
-    public static create(): Array<RequestHandler> {
+    public static createTutor(): Array<RequestHandler> {
         return [
             body('fullName')
                 .trim()
@@ -45,6 +46,11 @@ export class TutorValidator extends BaseValidator{
                         throw new Error('A senha deve ter ao menos 1 letra maiúscula, 1 número e 1 caractere especial.');
                     }
                     return true;
+                })
+                .customSanitizer(async (value) => {
+                    const salt = await bcrypt.genSalt(10);
+                    const hashedPassword = await bcrypt.hash(value, salt);
+                    return { hashedPassword, salt };
                 }),
             
             body('cpf')
