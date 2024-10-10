@@ -29,11 +29,18 @@ export class TutorValidator extends BaseValidator{
                 .trim()
                 .isString().withMessage('Data de nascimento deve ser uma string.')
                 .notEmpty().withMessage('Data de nascimento é obrigatória.')
-                .custom((value) => {
+                .custom((value: string): boolean => {
                     if (!birthDateRegex.test(value)) {
                         throw new Error('Data de nascimento deve estar no formato DD/MM/YYYY.');
                     }
+
                     return true;
+                })
+                .customSanitizer((value: string): string => {
+                    const [day, month, year] = value.split("/");
+                    const newBirthDate = `${year}-${month}-${day}`;
+
+                    return newBirthDate;
                 }),
             
             body('password')
@@ -47,17 +54,17 @@ export class TutorValidator extends BaseValidator{
                     }
                     return true;
                 })
-                .customSanitizer(async (value) => {
+                .customSanitizer(async (value: string): Promise<{ hashedPassword, salt }> => {
                     const salt = await bcrypt.genSalt(10);
                     const hashedPassword = await bcrypt.hash(value, salt);
-                    return { hashedPassword, salt };
+                    return Promise.resolve({ hashedPassword, salt }) ;
                 }),
             
             body('cpf')
                 .trim()
                 .isString().withMessage('CPF deve ser uma string.')
                 .notEmpty().withMessage('CPF é obrigatório.')
-                .custom((value) => {
+                .custom((value: string): boolean => {
                     if (!cpfRegex.test(value)) {
                         throw new Error('Formato do CPF inválido.');
                     }
@@ -75,7 +82,7 @@ export class TutorValidator extends BaseValidator{
                 .isString().withMessage('Email deve ser uma string.')
                 .notEmpty().withMessage('Email é obrigatório.')
                 .isEmail().withMessage('Email deve ser válido.')
-                .custom(async (value) => {
+                .custom(async (value: string): Promise<boolean> => {
                     const tutorRepository = MysqlDataSource.getRepository(Tutor);
                     const existingTutor = await tutorRepository.findOne({ where: { email: value } });
                     
@@ -90,7 +97,7 @@ export class TutorValidator extends BaseValidator{
                 .trim()
                 .isArray().withMessage('Matérias devem ser uma lista de IDs.')
                 .notEmpty().withMessage('Matérias são obrigatórias.')
-                .custom(async (value) => {
+                .custom(async (value: string[]): Promise<boolean> => {
                     const subjectRepository = MysqlDataSource.getRepository(Subject);
                     const subjects = await subjectRepository.findByIds(value);
 
@@ -105,7 +112,7 @@ export class TutorValidator extends BaseValidator{
                 .trim()
                 .isArray().withMessage('Faixa de ensino devem ser uma lista de IDs.')
                 .notEmpty().withMessage('Faixa de ensino é obrigatória.')
-                .custom(async (value) => {
+                .custom(async (value: string[]): Promise<boolean> => {
                     const educationLevelRepository = MysqlDataSource.getRepository(EducationLevel);
 
                     const parsedValues = value.map((id: string) => Number(id));
