@@ -98,6 +98,15 @@ export class TutorValidator extends BaseValidator{
                     }
 
                     return true;
+                }).custom(async (value: string): Promise<boolean> => {
+                    const tutorRepository = MysqlDataSource.getRepository(Tutor);
+                    const existingTutor = await tutorRepository.findOne({ where: { cpf: value } });
+
+                    if (existingTutor){
+                        return Promise.reject('Cpf já cadastrado.');
+                    }
+
+                    return true;
                 }),
             
             body('email')
