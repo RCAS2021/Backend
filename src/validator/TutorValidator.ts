@@ -34,6 +34,29 @@ export class TutorValidator extends BaseValidator{
                         throw new Error('Data de nascimento deve estar no formato DD/MM/YYYY.');
                     }
 
+                    const [day, month, year] = value.split('/').map(Number);
+                    const dateErrorMessage = "Data de nascimento incorreta, verifique a data inserida";
+
+                    if (month === 2){
+                        const isLeapYear = (year % 4 === 0 && year % 100 === 0) || (year % 400 === 0) ? true : false
+                        if (day > 29 || (day === 29 && !isLeapYear)){
+                            throw new Error(dateErrorMessage);
+                        }
+                    }
+                    else if (month === 4 || month === 6 || month === 9 || month === 11){
+                        if (day > 30){
+                            throw new Error(dateErrorMessage);
+                        }
+                    }
+                    else if (day > 31){
+                        throw new Error(dateErrorMessage);
+                    }
+
+                    const currentDate = new Date();
+                    if (day > currentDate.getDay() && month > currentDate.getMonth() && year > currentDate.getFullYear()){
+                        throw new Error(dateErrorMessage);
+                    }
+
                     return true;
                 })
                 .customSanitizer((value: string): string => {
